@@ -213,7 +213,7 @@ const App = {
             const product = await Storage.getProductById(t.productId);
             txRows.push(`
                 <tr>
-                    <td>${this.formatDate(t.date)}</td>
+                    <td>${this.formatDate(t.date, true)}</td>
                     <td>${product ? this.escapeHtml(product.name) : '-'}</td>
                     <td><span class="badge badge-${t.type.toLowerCase()}">${t.type === 'IN' ? 'Masuk' : 'Keluar'}</span></td>
                     <td>${t.quantity}</td>
@@ -307,8 +307,18 @@ const App = {
         }).format(amount);
     },
 
-    formatDate(dateStr) {
+    formatDate(dateStr, includeTime = false) {
+        if (!dateStr) return '-';
         const date = new Date(dateStr);
+        if (includeTime) {
+            return date.toLocaleString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
         return date.toLocaleDateString('id-ID', {
             day: 'numeric',
             month: 'short',

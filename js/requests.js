@@ -69,11 +69,11 @@ const Requests = {
                     </div>
                     <div class="request-meta">
                         <span>👤 ${App.escapeHtml(r.requesterName)}</span>
-                        <span>📅 ${App.formatDate(r.createdAt)}</span>
+                        <span>📅 ${App.formatDate(r.createdAt, true)}</span>
                     </div>
                     ${r.reason ? `<div class="request-reason">"${App.escapeHtml(r.reason)}"</div>` : ''}
-                    ${r.status === 'approved' ? `<div class="text-muted" style="font-size: 12px; margin-bottom: 12px;">Disetujui: ${App.formatDate(r.approvedAt)}</div>` : ''}
-                    ${r.status === 'completed' ? `<div class="text-muted" style="font-size: 12px; margin-bottom: 12px;">Selesai: ${App.formatDate(r.completedAt)}</div>` : ''}
+                    ${r.status === 'approved' ? `<div class="text-muted" style="font-size: 12px; margin-bottom: 12px;">Disetujui: ${App.formatDate(r.approvedAt, true)}</div>` : ''}
+                    ${r.status === 'completed' ? `<div class="text-muted" style="font-size: 12px; margin-bottom: 12px;">Selesai: ${App.formatDate(r.completedAt, true)}</div>` : ''}
                     <div class="request-actions">
                         ${actions}
                     </div>

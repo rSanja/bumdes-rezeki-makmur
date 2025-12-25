@@ -21,24 +21,43 @@ const Reports = {
     createPDF(title, orientation = 'portrait') {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF(orientation, 'mm', 'a4');
+        const pageWidth = orientation === 'landscape' ? 297 : 210;
 
-        doc.setFontSize(18);
+        // Branding Header
+        doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
-        doc.text('INVENTORY PRO', 14, 20);
-
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'normal');
-        doc.text(title, 14, 28);
+        doc.setTextColor(15, 23, 42); // Navy color matching our UI
+        doc.text('STIVEN BUMDES REZEKI MAKMUR', 14, 15);
 
         doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(100);
-        doc.text(`Dibuat: ${new Date().toLocaleString('id-ID')}`, 14, 35);
+        doc.text('Sistem Informasi & Manajemen Inventory', 14, 20);
+
+        // Report Title & Date Range
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
         doc.setTextColor(0);
 
-        doc.setLineWidth(0.5);
-        doc.line(14, 38, orientation === 'landscape' ? 283 : 196, 38);
+        // Handle multiline title (title + date range)
+        const titleLines = doc.splitTextToSize(title, pageWidth - 28);
+        doc.text(titleLines, 14, 28);
 
-        return doc;
+        const titleHeight = titleLines.length * 7;
+        const infoY = 28 + titleHeight;
+
+        // Info Metadata
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        doc.text(`Dicetak oleh: ${App.currentUser?.displayName || 'System'}`, 14, infoY);
+        doc.text(`Waktu Cetak: ${new Date().toLocaleString('id-ID')}`, 14, infoY + 4);
+
+        // Line separator
+        doc.setLineWidth(0.3);
+        doc.setDrawColor(200);
+        doc.line(14, infoY + 7, pageWidth - 14, infoY + 7);
+
+        return { doc, startY: infoY + 12 };
     },
 
     formatCurrency(amount) {
@@ -76,7 +95,7 @@ const Reports = {
         }
 
         const dateRange = fromDate && toDate ? `${this.formatDate(fromDate)} - ${this.formatDate(toDate)}` : 'Semua Periode';
-        const doc = this.createPDF(`LAPORAN PENJUALAN\n${dateRange}`);
+        const { doc, startY } = this.createPDF(`LAPORAN PENJUALAN\nPeriode: ${dateRange}`);
 
         const tableData = [];
         for (let i = 0; i < transactions.length; i++) {
@@ -99,13 +118,13 @@ const Reports = {
         const totalSales = transactions.reduce((sum, t) => sum + ((t.sellPrice || 0) * t.quantity), 0);
 
         doc.autoTable({
-            startY: 45,
+            startY: startY,
             head: [['No', 'Tanggal', 'Produk', 'Qty', 'Unit', 'Harga', 'Total', 'Keterangan']],
             body: tableData,
             foot: [['', '', 'TOTAL', totalQty, '', '', 'Rp ' + this.formatCurrency(totalSales), '']],
-            headStyles: { fillColor: [16, 185, 129] },
-            footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-            styles: { fontSize: 9 },
+            headStyles: { fillColor: [15, 23, 42] }, // Navy header
+            footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' },
+            styles: { fontSize: 8, cellPadding: 3 },
             columnStyles: {
                 0: { cellWidth: 10 },
                 5: { halign: 'right' },
@@ -139,7 +158,7 @@ const Reports = {
         }
 
         const dateRange = fromDate && toDate ? `${this.formatDate(fromDate)} - ${this.formatDate(toDate)}` : 'Semua Periode';
-        const doc = this.createPDF(`LAPORAN PEMBELIAN / BARANG MASUK\n${dateRange}`);
+        const { doc, startY } = this.createPDF(`LAPORAN PEMBELIAN / BARANG MASUK\nPeriode: ${dateRange}`);
 
         const tableData = [];
         for (let i = 0; i < transactions.length; i++) {
@@ -158,13 +177,13 @@ const Reports = {
         const totalQty = transactions.reduce((sum, t) => sum + t.quantity, 0);
 
         doc.autoTable({
-            startY: 45,
+            startY: startY,
             head: [['No', 'Tanggal', 'Produk', 'Jumlah', 'Unit', 'Supplier/Catatan']],
             body: tableData,
             foot: [['', '', 'TOTAL', totalQty, '', '']],
-            headStyles: { fillColor: [59, 130, 246] },
-            footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-            styles: { fontSize: 9 }
+            headStyles: { fillColor: [15, 23, 42] },
+            footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' },
+            styles: { fontSize: 8, cellPadding: 3 }
         });
 
         doc.save(`Laporan_Pembelian_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -183,7 +202,7 @@ const Reports = {
         }
 
         const statusLabel = statusFilter === 'all' ? 'Semua Status' : statusFilter.toUpperCase();
-        const doc = this.createPDF(`LAPORAN PENGAJUAN BARANG\nStatus: ${statusLabel}`);
+        const { doc, startY } = this.createPDF(`LAPORAN PENGAJUAN BARANG\nStatus: ${statusLabel}`);
 
         const tableData = [];
         for (let i = 0; i < requests.length; i++) {
@@ -202,11 +221,11 @@ const Reports = {
         }
 
         doc.autoTable({
-            startY: 45,
+            startY: startY,
             head: [['No', 'Tanggal', 'Produk', 'Qty', 'Unit', 'Pengaju', 'Status', 'Alasan']],
             body: tableData,
-            headStyles: { fillColor: [16, 185, 129] },
-            styles: { fontSize: 9 },
+            headStyles: { fillColor: [15, 23, 42] },
+            styles: { fontSize: 8, cellPadding: 3 },
             columnStyles: {
                 7: { cellWidth: 40 }
             }
@@ -236,7 +255,7 @@ const Reports = {
         }
 
         const title = stockOption === 'critical' ? 'LAPORAN STOK KRITIS' : 'LAPORAN STOK BARANG';
-        const doc = this.createPDF(title);
+        const { doc, startY } = this.createPDF(title);
 
         const tableData = products.map((p, i) => {
             const isCritical = p.currentStock <= p.minStock;
@@ -258,13 +277,13 @@ const Reports = {
         const totalStock = products.reduce((sum, p) => sum + p.currentStock, 0);
 
         doc.autoTable({
-            startY: 45,
+            startY: startY,
             head: [['No', 'SKU', 'Nama Produk', 'Kategori', 'Stok', 'Min', 'Unit', 'Harga Beli', 'Nilai', 'Status']],
             body: tableData,
             foot: [['', '', '', 'TOTAL', totalStock, '', '', '', 'Rp ' + this.formatCurrency(totalValue), '']],
-            headStyles: { fillColor: [139, 92, 246] },
-            footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-            styles: { fontSize: 8 },
+            headStyles: { fillColor: [15, 23, 42] },
+            footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' },
+            styles: { fontSize: 8, cellPadding: 3 },
             columnStyles: {
                 7: { halign: 'right' },
                 8: { halign: 'right' }
