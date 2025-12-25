@@ -47,10 +47,10 @@ const Transactions = {
             const product = await Storage.getProductById(t.productId);
             rows.push(`
                 <tr>
-                    <td>${App.formatDate(t.date)}</td>
+                    <td>${App.formatDate(t.date, true)}</td>
                     <td>${product ? App.escapeHtml(product.name) : '-'}</td>
                     <td><strong>${t.quantity}</strong> ${product?.unit || ''}</td>
-                    <td>${App.escapeHtml(t.notes || '-')}</td>
+                    <td>${App.escapeHtml(t.supplier || '-')}</td>
                     <td>${App.escapeHtml(t.notes || '-')}</td>
                 </tr>
             `);
@@ -64,12 +64,13 @@ const Transactions = {
 
     bindInboundForm() {
         const form = document.getElementById('inbound-form');
+        // Remove existing listener by replacing the element (reliable way to clear listeners)
         const newForm = form.cloneNode(true);
-        form.parentNode.replaceChild(newForm, form);
+        form.replaceWith(newForm);
 
-        newForm.addEventListener('submit', (e) => {
+        newForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            this.saveInbound();
+            await this.saveInbound();
         });
     },
 
@@ -86,25 +87,33 @@ const Transactions = {
             return;
         }
 
-        await Storage.saveTransaction({
+        const success = await Storage.saveTransaction({
             productId,
             type: 'IN',
             quantity,
             date: date ? new Date(date).toISOString() : new Date().toISOString(),
-            notes: supplier || notes,
+            supplier: supplier || '-',
+            notes: notes || '-',
             requestId
         });
 
-        if (requestId) {
-            await Storage.updateRequestStatus(requestId, 'completed');
+        if (success) {
+            if (requestId) {
+                await Storage.updateRequestStatus(requestId, 'completed');
+            }
+
+            App.showToast(`${quantity} unit berhasil dicatat masuk!`);
+
+            // Re-fetch form as it might have been replaced or needs specific reset
+            const form = document.getElementById('inbound-form');
+            if (form) form.reset();
+
+            this.setDefaultDate('inbound-date');
+            await this.populateApprovedRequests();
+            await this.renderInboundHistory();
+        } else {
+            App.showToast('Gagal menyimpan data!', 'error');
         }
-
-        App.showToast(`${quantity} unit berhasil dicatat masuk!`);
-
-        document.getElementById('inbound-form').reset();
-        this.setDefaultDate('inbound-date');
-        await this.populateApprovedRequests();
-        await this.renderInboundHistory();
     },
 
     // ==================== OUTBOUND ====================
@@ -142,7 +151,7 @@ const Transactions = {
             const total = (t.sellPrice || 0) * t.quantity;
             rows.push(`
                 <tr>
-                    <td>${App.formatDate(t.date)}</td>
+                    <td>${App.formatDate(t.date, true)}</td>
                     <td>${product ? App.escapeHtml(product.name) : '-'}</td>
                     <td><strong>${t.quantity}</strong> ${product?.unit || ''}</td>
                     <td>${App.formatCurrency(t.sellPrice || 0)}</td>
@@ -161,11 +170,11 @@ const Transactions = {
     bindOutboundForm() {
         const form = document.getElementById('outbound-form');
         const newForm = form.cloneNode(true);
-        form.parentNode.replaceChild(newForm, form);
+        form.replaceWith(newForm);
 
-        newForm.addEventListener('submit', (e) => {
+        newForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            this.saveOutbound();
+            await this.saveOutbound();
         });
 
         this.bindStockInfo();
