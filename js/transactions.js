@@ -34,7 +34,11 @@ const Transactions = {
 
     setDefaultDate(inputId) {
         const input = document.getElementById(inputId);
-        input.value = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        input.value = `${year}-${month}-${day}`;
     },
 
     async renderInboundHistory() {
@@ -91,7 +95,7 @@ const Transactions = {
             productId,
             type: 'IN',
             quantity,
-            date: date ? new Date(date).toISOString() : new Date().toISOString(),
+            date: date === new Date().toISOString().split('T')[0] ? new Date().toISOString() : new Date(date).toISOString(),
             supplier: supplier || '-',
             notes: notes || '-',
             requestId
@@ -203,7 +207,7 @@ const Transactions = {
             type: 'OUT',
             quantity,
             sellPrice,
-            date: date ? new Date(date).toISOString() : new Date().toISOString(),
+            date: date === new Date().toISOString().split('T')[0] ? new Date().toISOString() : new Date(date).toISOString(),
             notes
         });
 
