@@ -21,6 +21,7 @@ const Storage = {
     // Generic get/set
     get(key) {
         try {
+            // localStorage.getItem(key) adalah perintah hubung ke browser
             return JSON.parse(localStorage.getItem(key)) || [];
         } catch {
             return [];
@@ -28,6 +29,7 @@ const Storage = {
     },
 
     set(key, data) {
+        // localStorage.setItem(key, ...) adalah perintah simpan ke browser
         localStorage.setItem(key, JSON.stringify(data));
     },
 
@@ -61,6 +63,7 @@ const Storage = {
     },
 
     logout() {
+        // localStorage.removeItem adalah perintah hapus dari browser
         localStorage.removeItem(this.KEYS.CURRENT_USER);
     },
 
@@ -119,10 +122,10 @@ const Storage = {
         transaction.date = transaction.date || new Date().toISOString();
         transactions.unshift(transaction); // Add to beginning
         this.set(this.KEYS.TRANSACTIONS, transactions);
-        
+
         // Update product stock
         this.updateProductStock(transaction.productId, transaction.quantity, transaction.type);
-        
+
         return transaction;
     },
 
@@ -147,7 +150,7 @@ const Storage = {
     },
 
     getApprovedRequestsForProduct(productId) {
-        return this.getRequests().filter(r => 
+        return this.getRequests().filter(r =>
             r.productId === productId && r.status === 'approved'
         );
     },
@@ -214,11 +217,11 @@ const Storage = {
     initDemoData() {
         // Users
         const users = [
-            { id: 'u1', username: 'manager', password: 'manager123', role: 'manager', displayName: 'Budi Manager' },
-            { id: 'u2', username: 'admin', password: 'admin123', role: 'admin', displayName: 'Siti Admin' },
-            { id: 'u3', username: 'staff', password: 'staff123', role: 'staff', displayName: 'Ahmad Staff' }
+            { id: 'u1', username: 'manager', password: 'manager123', role: 'manager', displayName: 'Kades Manager' },
+            { id: 'u2', username: 'admin', password: 'admin123', role: 'admin', displayName: 'Agung Admin' },
+            { id: 'u3', username: 'staff', password: 'staff123', role: 'staff', displayName: 'Tegar Staff' }
         ];
-        this.set(this.KEYS.USERS, users);
+        this.set(this.KEYS.USERS, users); //untuk menyimpan data ke local storage
 
         // Products
         const products = [
@@ -229,25 +232,25 @@ const Storage = {
             { id: 'p5', name: 'Kopi Sachet', sku: 'KPI001', category: 'Minuman', unit: 'Box', currentStock: 12, minStock: 5, buyPrice: 45000 },
             { id: 'p6', name: 'Teh Celup', sku: 'TEH001', category: 'Minuman', unit: 'Box', currentStock: 3, minStock: 8, buyPrice: 25000 }
         ];
-        this.set(this.KEYS.PRODUCTS, products);
+        this.set(this.KEYS.PRODUCTS, products); //untuk menyimpan data ke local storage
 
         // Transactions
         const now = new Date();
         const transactions = [
-            { id: 't1', productId: 'p1', type: 'IN', quantity: 50, date: new Date(now - 5*24*60*60*1000).toISOString(), notes: 'PT. Beras Makmur' },
-            { id: 't2', productId: 'p1', type: 'OUT', quantity: 25, date: new Date(now - 3*24*60*60*1000).toISOString(), notes: 'Penjualan retail', sellPrice: 85000 },
-            { id: 't3', productId: 'p2', type: 'IN', quantity: 20, date: new Date(now - 4*24*60*60*1000).toISOString(), notes: 'Distributor ABC' },
-            { id: 't4', productId: 'p2', type: 'OUT', quantity: 12, date: new Date(now - 2*24*60*60*1000).toISOString(), notes: 'Warung Pak Joko', sellPrice: 42000 },
-            { id: 't5', productId: 'p4', type: 'IN', quantity: 30, date: new Date(now - 1*24*60*60*1000).toISOString(), notes: 'PT. Bersih Cemerlang' }
+            { id: 't1', productId: 'p1', type: 'IN', quantity: 50, date: new Date(now - 5 * 24 * 60 * 60 * 1000).toISOString(), notes: 'PT. Beras Makmur' },
+            { id: 't2', productId: 'p1', type: 'OUT', quantity: 25, date: new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString(), notes: 'Penjualan retail', sellPrice: 85000 },
+            { id: 't3', productId: 'p2', type: 'IN', quantity: 20, date: new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString(), notes: 'Distributor ABC' },
+            { id: 't4', productId: 'p2', type: 'OUT', quantity: 12, date: new Date(now - 2 * 24 * 60 * 60 * 1000).toISOString(), notes: 'Warung Pak Joko', sellPrice: 42000 },
+            { id: 't5', productId: 'p4', type: 'IN', quantity: 30, date: new Date(now - 1 * 24 * 60 * 60 * 1000).toISOString(), notes: 'PT. Bersih Cemerlang' }
         ];
-        this.set(this.KEYS.TRANSACTIONS, transactions);
+        this.set(this.KEYS.TRANSACTIONS, transactions); //untuk menyimpan data ke local storage
 
         // Requests
         const requests = [
-            { id: 'r1', productId: 'p3', quantity: 30, status: 'pending', requesterName: 'Ahmad Staff', reason: 'Stok gula tinggal 5kg, perlu restock untuk minggu depan', createdAt: new Date(now - 1*24*60*60*1000).toISOString() },
-            { id: 'r2', productId: 'p2', quantity: 24, status: 'approved', requesterName: 'Ahmad Staff', reason: 'Minyak goreng hampir habis', createdAt: new Date(now - 3*24*60*60*1000).toISOString(), approvedAt: new Date(now - 2*24*60*60*1000).toISOString() }
+            { id: 'r1', productId: 'p3', quantity: 30, status: 'pending', requesterName: 'Ahmad Staff', reason: 'Stok gula tinggal 5kg, perlu restock untuk minggu depan', createdAt: new Date(now - 1 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 'r2', productId: 'p2', quantity: 24, status: 'approved', requesterName: 'Ahmad Staff', reason: 'Minyak goreng hampir habis', createdAt: new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString(), approvedAt: new Date(now - 2 * 24 * 60 * 60 * 1000).toISOString() }
         ];
-        this.set(this.KEYS.REQUESTS, requests);
+        this.set(this.KEYS.REQUESTS, requests); //untuk menyimpan data ke local storage
     }
 };
 
