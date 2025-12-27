@@ -28,7 +28,7 @@
                 </div>
                 <form id="login-form">
                     <div class="form-group">
-                        <label for="username">Username</label>
+                        <label for="username">Username (Email)</label>
                         <div class="input-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -36,7 +36,7 @@
                                 <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
-                            <input type="text" id="username" placeholder="Masukkan username" required>
+                            <input type="text" id="username" placeholder="Masukkan email" required>
                         </div>
                     </div>
                     <div class="form-group">
@@ -56,9 +56,79 @@
                     </button>
                     <div id="login-error" class="error-message hidden"></div>
                 </form>
+                <div class="auth-toggle">
+                    <p>Belum punya akun? <a href="#" id="to-register">Daftar Akun Baru</a></p>
+                </div>
                 <div class="demo-accounts">
                     <p>Demo Accounts:</p>
-                    <small>manager / manager123 | admin / admin123 | staff / staff123</small>
+                    <small>manager@test.com / manager123 | admin@test.com / admin123</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Screen -->
+        <div id="register-screen" class="login-container hidden">
+            <div class="login-card">
+                <div class="login-header">
+                    <span class="logo-icon">📦</span>
+                    <h1>Daftar Akun STIVEN</h1>
+                    <p>Buat akun baru Anda</p>
+                </div>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-name">Nama Lengkap</label>
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <input type="text" id="register-name" placeholder="Nama Lengkap" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                </path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            <input type="email" id="register-email" placeholder="email@example.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <input type="password" id="register-password" placeholder="Masukkan password" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-role">Role Manajemen</label>
+                        <select id="register-role" class="select-input" required
+                            style="width: 100%; padding-left: 10px;">
+                            <option value="">-- Pilih Role --</option>
+                            <option value="manager">Manager</option>
+                            <option value="admin">Admin</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">
+                        Daftar
+                    </button>
+                    <div id="register-error" class="error-message hidden"></div>
+                </form>
+                <div class="auth-toggle">
+                    <p>Sudah punya akun? <a href="#" id="to-login">Masuk</a></p>
                 </div>
             </div>
         </div>

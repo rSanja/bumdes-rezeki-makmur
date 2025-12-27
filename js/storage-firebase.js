@@ -66,6 +66,31 @@ const StorageFirebase = {
         }
     },
 
+    async registerUser(userData) {
+        try {
+            // Check if user already exists
+            const existing = await this.db.collection('users')
+                .where('username', '==', userData.username)
+                .get();
+
+            if (!existing.empty) {
+                throw new Error('Email sudah terdaftar!');
+            }
+
+            // Add new user
+            const newUser = {
+                ...userData,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            const docRef = await this.db.collection('users').add(newUser);
+            return { id: docRef.id, ...newUser };
+        } catch (error) {
+            console.error('registerUser error:', error);
+            throw error;
+        }
+    },
+
     getCurrentUser() {
         return this.currentUser;
     },

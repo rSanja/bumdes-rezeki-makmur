@@ -54,6 +54,24 @@ const Storage = {
         return null;
     },
 
+    registerUser(userData) {
+        const users = this.getUsers();
+        const exists = users.find(u => u.username === userData.username);
+        if (exists) {
+            throw new Error('Email sudah terdaftar!');
+        }
+
+        const newUser = {
+            ...userData,
+            id: this.generateId(),
+            createdAt: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        this.set(this.KEYS.USERS, users);
+        return newUser;
+    },
+
     getCurrentUser() {
         try {
             return JSON.parse(localStorage.getItem(this.KEYS.CURRENT_USER));

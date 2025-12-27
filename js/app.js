@@ -31,11 +31,19 @@ const App = {
 
     showLogin() {
         document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('register-screen').classList.add('hidden');
+        document.getElementById('main-app').classList.add('hidden');
+    },
+
+    showRegister() {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('register-screen').classList.remove('hidden');
         document.getElementById('main-app').classList.add('hidden');
     },
 
     showApp() {
         document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('register-screen').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
         this.updateUserInfo();
         this.updateSidebarByRole();
@@ -67,11 +75,47 @@ const App = {
         }
     },
 
+    async handleRegister(e) {
+        e.preventDefault();
+        const displayName = document.getElementById('register-name').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const role = document.getElementById('register-role').value;
+        const errorEl = document.getElementById('register-error');
+        const btn = e.target.querySelector('button[type="submit"]');
+
+        btn.disabled = true;
+        btn.textContent = 'Loading...';
+
+        try {
+            await Storage.registerUser({
+                displayName,
+                username: email,
+                password,
+                role
+            });
+
+            this.showToast('Registrasi berhasil! Silakan masuk.');
+            this.showLogin();
+
+            // Clear form
+            e.target.reset();
+            errorEl.classList.add('hidden');
+        } catch (error) {
+            errorEl.textContent = error.message || 'Terjadi kesalahan saat registrasi';
+            errorEl.classList.remove('hidden');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Daftar';
+        }
+    },
+
     handleLogout() {
         Storage.logout();
         this.currentUser = null;
-        document.getElementById('username').value = '';
-        document.getElementById('password').value = '';
+        // Reset forms
+        document.getElementById('login-form').reset();
+        document.getElementById('register-form').reset();
         this.showLogin();
     },
 
@@ -227,7 +271,18 @@ const App = {
     // ==================== EVENTS ====================
     bindEvents() {
         document.getElementById('login-form').addEventListener('submit', (e) => this.handleLogin(e));
+        document.getElementById('register-form').addEventListener('submit', (e) => this.handleRegister(e));
         document.getElementById('logout-btn').addEventListener('click', () => this.handleLogout());
+
+        document.getElementById('to-register').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showRegister();
+        });
+
+        document.getElementById('to-login').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showLogin();
+        });
 
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
