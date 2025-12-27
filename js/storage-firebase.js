@@ -132,14 +132,19 @@ const StorageFirebase = {
 
     async saveProduct(product) {
         try {
-            if (product.id) {
+            const dataToSave = { ...product };
+            const productId = dataToSave.id;
+            delete dataToSave.id; // Don't save ID inside the document fields
+
+            if (productId) {
                 // Update existing
-                await this.db.collection('products').doc(product.id).update(product);
+                await this.db.collection('products').doc(productId).update(dataToSave);
+                product.id = productId;
             } else {
                 // Create new
-                product.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                product.currentStock = product.currentStock || 0;
-                const docRef = await this.db.collection('products').add(product);
+                dataToSave.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                dataToSave.currentStock = dataToSave.currentStock || 0;
+                const docRef = await this.db.collection('products').add(dataToSave);
                 product.id = docRef.id;
             }
             return product;

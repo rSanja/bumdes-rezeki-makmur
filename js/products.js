@@ -139,22 +139,31 @@ const Products = {
     },
 
     async save() {
-        const product = {
-            id: document.getElementById('pf-id').value || null,
-            name: document.getElementById('pf-name').value.trim(),
-            sku: document.getElementById('pf-sku').value.trim(),
-            category: document.getElementById('pf-category').value.trim(),
-            unit: document.getElementById('pf-unit').value.trim(),
-            minStock: parseInt(document.getElementById('pf-minstock').value) || 0,
-            buyPrice: parseInt(document.getElementById('pf-buyprice').value) || 0,
-            currentStock: parseInt(document.getElementById('pf-stock').value) || 0
-        };
+        try {
+            const product = {
+                id: document.getElementById('pf-id').value || null,
+                name: document.getElementById('pf-name').value.trim(),
+                sku: document.getElementById('pf-sku').value.trim(),
+                category: document.getElementById('pf-category').value.trim(),
+                unit: document.getElementById('pf-unit').value.trim(),
+                minStock: parseInt(document.getElementById('pf-minstock').value) || 0,
+                buyPrice: parseInt(document.getElementById('pf-buyprice').value) || 0,
+                currentStock: parseInt(document.getElementById('pf-stock').value) || 0
+            };
 
-        await Storage.saveProduct(product);
-        App.closeModal();
-        App.showToast(product.id ? 'Produk berhasil diperbarui!' : 'Produk berhasil ditambahkan!');
-        await this.loadCategoryFilter();
-        await this.render();
+            const savedProduct = await Storage.saveProduct(product);
+            if (savedProduct) {
+                App.closeModal();
+                App.showToast(product.id ? 'Produk berhasil diperbarui!' : 'Produk berhasil ditambahkan!');
+                await this.loadCategoryFilter();
+                await this.render();
+            } else {
+                App.showToast('Gagal menyimpan produk ke database!', 'error');
+            }
+        } catch (error) {
+            console.error('Save product error:', error);
+            App.showToast('Terjadi kesalahan saat menyimpan produk!', 'error');
+        }
     },
 
     async edit(id) {
@@ -165,25 +174,62 @@ const Products = {
     },
 
     async delete(id) {
-        const product = await Storage.getProductById(id);
-        if (!product) return;
+        try {
+            const product = await Storage.getProductById(id);
+            if (!product) {
+                App.showToast('Produk tidak ditemukan!', 'error');
+                return;
+            }
 
-        const content = `
-            <p>Apakah Anda yakin ingin menghapus produk <strong>${App.escapeHtml(product.name)}</strong>?</p>
-            <p class="text-muted" style="margin-top: 8px;">Tindakan ini tidak dapat dibatalkan.</p>
-            <div class="modal-footer" style="margin-top: 24px;">
-                <button class="btn btn-outline" onclick="App.closeModal()">Batal</button>
-                <button class="btn btn-danger" onclick="Products.confirmDelete('${id}')">Hapus</button>
-            </div>
-        `;
+            // Validation: Prevent deleting product with stock
+            if (product.currentStock > 0) {
+                App.showToast(`Gagal hapus! Produk <strong>${product.name}</strong> masih memiliki stok (${product.currentStock} ${product.unit}). Habiskan stok terlebih dahulu.`, 'warning');
+                return;
+            }
 
-        App.showModal('Hapus Produk', content);
+            const content = `
+                <p>Apakah Anda yakin ingin menghapus produk <strong>${App.escapeHtml(product.name)}</strong>?</p>
+                <p class="text-muted" style="margin-top: 8px;">Tindakan ini tidak dapat dibatalkan.</p>
+                <div class="modal-footer" style="margin-top: 24px;">
+                    <button class="btn btn-outline" onclick="App.closeModal()">Batal</button>
+                    <button class="btn btn-danger" id="confirm-delete-btn" onclick="Products.confirmDelete('${id}')">Hapus</button>
+                </div>
+            `;
+
+            App.showModal('Hapus Produk', content);
+        } catch (error) {
+            console.error('Delete product error:', error);
+            App.showToast('Terjadi kesalahan saat memuat data produk!', 'error');
+        }
     },
 
     async confirmDelete(id) {
-        await Storage.deleteProduct(id);
-        App.closeModal();
-        App.showToast('Produk berhasil dihapus!');
-        await this.render();
+        const btn = document.getElementById('confirm-delete-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Menghapus...';
+        }
+
+        try {
+            const success = await Storage.deleteProduct(id);
+            if (success) {
+                App.closeModal();
+                App.showToast('Produk berhasil dihapus!');
+                await this.render();
+            } else {
+                App.showToast('Gagal menghapus produk dari database!', 'error');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Hapus';
+                }
+            }
+        } catch (error) {
+            console.error('Confirm delete error:', error);
+            App.showToast('Terjadi kesalahan saat menghapus produk!', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Hapus';
+            }
+        }
     }
 };

@@ -49,10 +49,13 @@ const Transactions = {
         let rows = [];
         for (const t of recent) {
             const product = await Storage.getProductById(t.productId);
+            const productName = product ? App.escapeHtml(product.name) : `<span class="text-muted">(ID: ${t.productId})</span>`;
+            const productSku = product ? `<br><small class="text-muted">${App.escapeHtml(product.sku)}</small>` : '';
+
             rows.push(`
                 <tr>
                     <td>${App.formatDate(t.date, true)}</td>
-                    <td>${product ? App.escapeHtml(product.name) : '-'}</td>
+                    <td><strong>${productName}</strong>${productSku}</td>
                     <td><strong>${t.quantity}</strong> ${product?.unit || ''}</td>
                     <td>${App.escapeHtml(t.supplier || '-')}</td>
                     <td>${App.escapeHtml(t.notes || '-')}</td>
@@ -152,11 +155,14 @@ const Transactions = {
         let rows = [];
         for (const t of recent) {
             const product = await Storage.getProductById(t.productId);
+            const productName = product ? App.escapeHtml(product.name) : `<span class="text-muted">(ID: ${t.productId})</span>`;
+            const productSku = product ? `<br><small class="text-muted">${App.escapeHtml(product.sku)}</small>` : '';
             const total = (t.sellPrice || 0) * t.quantity;
+
             rows.push(`
                 <tr>
                     <td>${App.formatDate(t.date, true)}</td>
-                    <td>${product ? App.escapeHtml(product.name) : '-'}</td>
+                    <td><strong>${productName}</strong>${productSku}</td>
                     <td><strong>${t.quantity}</strong> ${product?.unit || ''}</td>
                     <td>${App.formatCurrency(t.sellPrice || 0)}</td>
                     <td>${App.formatCurrency(total)}</td>
@@ -185,37 +191,50 @@ const Transactions = {
     },
 
     async saveOutbound() {
-        const productId = document.getElementById('outbound-product').value;
-        const quantity = parseInt(document.getElementById('outbound-quantity').value);
-        const sellPrice = parseInt(document.getElementById('outbound-price').value) || 0;
-        const date = document.getElementById('outbound-date').value;
-        const notes = document.getElementById('outbound-notes').value;
+        try {
+            const productId = document.getElementById('outbound-product').value;
+            const quantity = parseInt(document.getElementById('outbound-quantity').value);
+            const sellPrice = parseInt(document.getElementById('outbound-price').value) || 0;
+            const date = document.getElementById('outbound-date').value;
+            const notes = document.getElementById('outbound-notes').value;
 
-        if (!productId || !quantity) {
-            App.showToast('Pilih produk dan masukkan jumlah!', 'error');
-            return;
+            if (!productId || !quantity) {
+                App.showToast('Pilih produk dan masukkan jumlah!', 'error');
+                return;
+            }
+
+            const product = await Storage.getProductById(productId);
+            if (!product) {
+                App.showToast('Produk tidak ditemukan!', 'error');
+                return;
+            }
+
+            if (quantity > product.currentStock) {
+                App.showToast(`Stok tidak cukup! Tersedia: ${product.currentStock} ${product.unit}`, 'error');
+                return;
+            }
+
+            const success = await Storage.saveTransaction({
+                productId,
+                type: 'OUT',
+                quantity,
+                sellPrice,
+                date: date === new Date().toISOString().split('T')[0] ? new Date().toISOString() : new Date(date).toISOString(),
+                notes: notes || '-'
+            });
+
+            if (success) {
+                App.showToast(`${quantity} unit berhasil dicatat keluar!`);
+                document.getElementById('outbound-form').reset();
+                this.setDefaultDate('outbound-date');
+                document.getElementById('stock-info').textContent = '';
+                await this.renderOutboundHistory();
+            } else {
+                App.showToast('Gagal menyimpan data penjualan! Cek koneksi Anda.', 'error');
+            }
+        } catch (error) {
+            console.error('saveOutbound error:', error);
+            App.showToast('Terjadi kesalahan sistem saat menyimpan data!', 'error');
         }
-
-        const product = await Storage.getProductById(productId);
-        if (quantity > product.currentStock) {
-            App.showToast(`Stok tidak cukup! Tersedia: ${product.currentStock} ${product.unit}`, 'error');
-            return;
-        }
-
-        await Storage.saveTransaction({
-            productId,
-            type: 'OUT',
-            quantity,
-            sellPrice,
-            date: date === new Date().toISOString().split('T')[0] ? new Date().toISOString() : new Date(date).toISOString(),
-            notes
-        });
-
-        App.showToast(`${quantity} unit berhasil dicatat keluar!`);
-
-        document.getElementById('outbound-form').reset();
-        this.setDefaultDate('outbound-date');
-        document.getElementById('stock-info').textContent = '';
-        await this.renderOutboundHistory();
     }
 };
