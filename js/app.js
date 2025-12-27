@@ -252,13 +252,19 @@ const App = {
         const recentTx = transactions.slice(0, 10);
         const txBody = document.getElementById('recent-transactions-table');
 
+        const products = await Storage.getProducts();
+        const productMap = products.reduce((map, p) => {
+            map[p.id] = p;
+            return map;
+        }, {});
+
         const txRows = [];
         for (const t of recentTx) {
-            const product = await Storage.getProductById(t.productId);
+            const product = productMap[t.productId];
             txRows.push(`
                 <tr>
                     <td>${this.formatDate(t.date, true)}</td>
-                    <td>${product ? this.escapeHtml(product.name) : '-'}</td>
+                    <td>${product ? this.escapeHtml(product.name) : `<span class="text-muted">(ID: ${t.productId})</span>`}</td>
                     <td><span class="badge badge-${t.type.toLowerCase()}">${t.type === 'IN' ? 'Masuk' : 'Keluar'}</span></td>
                     <td>${t.quantity}</td>
                     <td>${this.escapeHtml(t.notes || '-')}</td>

@@ -44,11 +44,17 @@ const Transactions = {
     async renderInboundHistory() {
         const transactions = await Storage.getTransactionsByType('IN');
         const recent = transactions.slice(0, 20);
+        const products = await Storage.getProducts();
+        const productMap = products.reduce((map, p) => {
+            map[p.id] = p;
+            return map;
+        }, {});
+
         const tbody = document.getElementById('inbound-history-table');
 
         let rows = [];
         for (const t of recent) {
-            const product = await Storage.getProductById(t.productId);
+            const product = productMap[t.productId];
             const productName = product ? App.escapeHtml(product.name) : `<span class="text-muted">(ID: ${t.productId})</span>`;
             const productSku = product ? `<br><small class="text-muted">${App.escapeHtml(product.sku)}</small>` : '';
 
@@ -59,13 +65,23 @@ const Transactions = {
                     <td><strong>${t.quantity}</strong> ${product?.unit || ''}</td>
                     <td>${App.escapeHtml(t.supplier || '-')}</td>
                     <td>${App.escapeHtml(t.notes || '-')}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn edit" onclick="Transactions.editInbound('${t.id}')" title="Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="action-btn delete" onclick="Transactions.deleteInbound('${t.id}')" title="Hapus">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    </td>
                 </tr>
             `);
         }
         tbody.innerHTML = rows.join('');
 
         if (recent.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="padding: 40px; text-align: center; color: var(--text-muted);">Belum ada data barang masuk</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="padding: 40px; text-align: center; color: var(--text-muted);">Belum ada data barang masuk</td></tr>`;
         }
     },
 
@@ -150,11 +166,17 @@ const Transactions = {
     async renderOutboundHistory() {
         const transactions = await Storage.getTransactionsByType('OUT');
         const recent = transactions.slice(0, 20);
+        const products = await Storage.getProducts();
+        const productMap = products.reduce((map, p) => {
+            map[p.id] = p;
+            return map;
+        }, {});
+
         const tbody = document.getElementById('outbound-history-table');
 
         let rows = [];
         for (const t of recent) {
-            const product = await Storage.getProductById(t.productId);
+            const product = productMap[t.productId];
             const productName = product ? App.escapeHtml(product.name) : `<span class="text-muted">(ID: ${t.productId})</span>`;
             const productSku = product ? `<br><small class="text-muted">${App.escapeHtml(product.sku)}</small>` : '';
             const total = (t.sellPrice || 0) * t.quantity;
@@ -167,13 +189,23 @@ const Transactions = {
                     <td>${App.formatCurrency(t.sellPrice || 0)}</td>
                     <td>${App.formatCurrency(total)}</td>
                     <td>${App.escapeHtml(t.notes || '-')}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn edit" onclick="Transactions.editOutbound('${t.id}')" title="Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="action-btn delete" onclick="Transactions.deleteOutbound('${t.id}')" title="Hapus">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    </td>
                 </tr>
             `);
         }
         tbody.innerHTML = rows.join('');
 
         if (recent.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="padding: 40px; text-align: center; color: var(--text-muted);">Belum ada data penjualan</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="padding: 40px; text-align: center; color: var(--text-muted);">Belum ada data penjualan</td></tr>`;
         }
     },
 
@@ -236,5 +268,37 @@ const Transactions = {
             console.error('saveOutbound error:', error);
             App.showToast('Terjadi kesalahan sistem saat menyimpan data!', 'error');
         }
+    },
+
+    async deleteInbound(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus catatan barang masuk ini? Stok akan dikurangi secara otomatis.')) {
+            const success = await Storage.deleteTransaction(id);
+            if (success) {
+                App.showToast('Catatan berhasil dihapus!');
+                await this.loadInbound();
+            } else {
+                App.showToast('Gagal menghapus catatan!', 'error');
+            }
+        }
+    },
+
+    async deleteOutbound(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus catatan penjualan ini? Stok akan dikembalikan secara otomatis.')) {
+            const success = await Storage.deleteTransaction(id);
+            if (success) {
+                App.showToast('Catatan berhasil dihapus!');
+                await this.loadOutbound();
+            } else {
+                App.showToast('Gagal menghapus catatan!', 'error');
+            }
+        }
+    },
+
+    async editInbound(id) {
+        App.showToast('Fitur edit transaksi sedang dikembangkan. Untuk sementara, silakan hapus dan input ulang.', 'warning');
+    },
+
+    async editOutbound(id) {
+        App.showToast('Fitur edit transaksi sedang dikembangkan. Untuk sementara, silakan hapus dan input ulang.', 'warning');
     }
 };

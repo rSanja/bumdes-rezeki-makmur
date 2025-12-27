@@ -225,6 +225,27 @@ const StorageFirebase = {
         }
     },
 
+    async deleteTransaction(id) {
+        try {
+            const doc = await this.db.collection('transactions').doc(id).get();
+            if (!doc.exists) return false;
+
+            const transaction = doc.data();
+
+            // Revert stock change
+            // If it was IN, we subtract. If it was OUT, we add.
+            const type = transaction.type === 'IN' ? 'OUT' : 'IN';
+            await this.updateProductStock(transaction.productId, transaction.quantity, type);
+
+            // Delete transaction
+            await this.db.collection('transactions').doc(id).delete();
+            return true;
+        } catch (error) {
+            console.error('deleteTransaction error:', error);
+            return false;
+        }
+    },
+
     async getRecentTransactions(days = 7) {
         try {
             const cutoff = new Date();
